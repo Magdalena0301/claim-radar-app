@@ -73,9 +73,6 @@
   .hero .big small { font-size: .42em; font-weight: 600; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
   .hero .limit { color: var(--muted); font-size: 14px; margin-top: 4px; }
   .hero .badge { margin-top: 10px; }
-  .dots { position: absolute; top: -20px; left: 52%; display: flex; gap: 0; pointer-events: none; opacity: .92; }
-  .dots i { width: 64px; height: 64px; border-radius: 50%; background: var(--red); margin-left: -14px; }
-  .dots i:nth-child(2) { background: var(--orange); } .dots i:nth-child(3) { background: var(--yellow); }
   .meter { grid-column: 1 / -1; }
   .meter .track { position: relative; height: 18px; background: var(--card2); border-radius: 999px; }
   .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--red); transition: width .3s; }
@@ -86,6 +83,12 @@
   /* work */
   .work { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .search { border: 0; border-radius: 12px; padding: 10px 13px; background: var(--card2); width: 100%; font-weight: 600; }
+  .catbar { display: flex; flex-wrap: wrap; gap: 6px; }
+  .catchip { border: 0; border-radius: 999px; padding: 5px 11px; cursor: pointer; font-size: 12.5px; font-weight: 700; background: var(--card2); display: flex; align-items: center; gap: 6px; }
+  .catchip.on { background: var(--ink); color: var(--card); }
+  .catchip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .scrollbox { max-height: 216px; overflow-y: auto; padding: 2px 4px 2px 0; }
   .chip { border: 0; border-radius: 999px; padding: 9px 15px; cursor: pointer; font-weight: 700; font-size: 14px; color: #1E1D1A; transition: transform .08s; }
   .chip:hover { transform: translateY(-1px); } .chip:active { transform: scale(.97); }
   .mix { display: flex; flex-direction: column; gap: 8px; }
@@ -126,7 +129,7 @@
   .form .field.wide { grid-column: 1 / -1; }
   .foot { color: var(--muted); font-size: 12.5px; line-height: 1.6; }
 
-  @media (max-width: 820px) { .mkt, .work, .hero { grid-template-columns: 1fr; } .hero .bigwrap { text-align: left; } .dots { display: none; } .tiles { grid-template-columns: repeat(2, 1fr); } .form { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 820px) { .mkt, .work, .hero { grid-template-columns: 1fr; } .hero .bigwrap { text-align: left; } .tiles { grid-template-columns: repeat(2, 1fr); } .form { grid-template-columns: 1fr 1fr; } }
   @media (prefers-reduced-motion: reduce) { .meter .fill, .chip { transition: none; } }
 
   /* ---- print / PDF ---- */
@@ -153,7 +156,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.7</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.8</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -192,7 +195,6 @@
     <div class="card" id="noBrief"><div class="card-b"><b>Nothing to work on yet.</b><span class="hint">Go to Marketing, enter a product and the claims you want, and send it to product development.</span></div></div>
 
     <div class="card hero" id="hero">
-      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
       <div>
         <div class="k">Target claims</div>
         <div class="claim" id="hClaim"></div>
@@ -215,7 +217,10 @@
         <div class="card-h"><h2>Build the recipe</h2><select id="briefPick" class="btn sm"></select></div>
         <div class="card-b">
           <div class="hint">Tap an ingredient to add 10 g. Change the grams as you like.</div>
-          <div class="chips" id="chips"></div>
+          <input id="ingSearch" class="search" type="search" placeholder="Search ingredients…" autocomplete="off">
+          <div class="catbar" id="catBar"></div>
+          <div class="chips scrollbox" id="chips"></div>
+          <div class="hint" id="pickCount"></div>
           <div class="mix" id="mix"></div>
           <div class="mixtotal"><span>Total batch</span><span class="num" id="mixTotal">0 g</span></div>
           <div class="loss"><label for="loss">Weight lost in baking / drying</label><input id="loss" type="number" min="0" max="90" step="0.5" value="0"> %</div>
@@ -255,9 +260,11 @@
   <div class="card hidden" id="libPanel">
     <div class="card-h"><h2>Ingredients — per 100 g, as printed on the label</h2><button class="btn sm" id="btnLibClose">Close</button></div>
     <div class="card-b">
-      <div class="libwrap"><table class="lib" id="libTable"></table></div>
+      <input id="libSearch" class="search" type="search" placeholder="Search ingredients…" autocomplete="off">
+      <div class="libwrap" style="max-height:340px; overflow-y:auto"><table class="lib" id="libTable"></table></div>
       <div class="form">
-        <div class="field wide"><label for="liName">Name</label><input id="liName" placeholder="e.g. Rolled oats"></div>
+        <div class="field" style="grid-column: span 2"><label for="liName">Name</label><input id="liName" placeholder="e.g. Rolled oats"></div>
+        <div class="field" style="grid-column: span 2"><label for="liCat">Category</label><select id="liCat"></select></div>
         <div class="field"><label for="liFat">Fat g</label><input id="liFat" type="number" step="0.1" min="0"></div>
         <div class="field"><label for="liSat">of which saturates g</label><input id="liSat" type="number" step="0.1" min="0"></div>
         <div class="field"><label for="liCarb">Carbohydrate g</label><input id="liCarb" type="number" step="0.1" min="0"></div>
@@ -330,19 +337,53 @@ var RULES = [
   { id: 32, w: 'HIGH UNSATURATED FAT',        rule: 'manual', src: 'Annex p. 31', note: 'needs the fatty-acid profile' }
 ];
 var NUT_LABEL = { energy: 'energy', fat: 'fat', sat: 'saturated fat', sugar: 'sugars', sodium: 'sodium', fibre: 'fibre', protE: 'energy from protein' };
-var PALETTE = ['#A8C3B0', '#B69B75', '#F1E98F', '#E9752E', '#6D8E60', '#8FA7B5', '#BDBAB1', '#DB3A26'];
-var LIGHT_TEXT = { '#E9752E': false, '#6D8E60': true, '#DB3A26': true, '#B69B75': false };
-
-var EXAMPLE_INGREDIENTS = [ // EXAMPLE values — replace with real label values (data/ingredients.csv)
-  { id: 'oats',  name: 'Rolled oats',     fat: 7.0,  sat: 1.3, carb: 58.0,  sugar: 1.0,   fibre: 10.0, prot: 13.0, salt: 0.02, source: 'EXAMPLE', example: true },
-  { id: 'rais',  name: 'Raisins',         fat: 0.5,  sat: 0.1, carb: 72.0,  sugar: 59.0,  fibre: 3.7,  prot: 3.1,  salt: 0.03, source: 'EXAMPLE', example: true },
-  { id: 'hazel', name: 'Hazelnuts',       fat: 61.0, sat: 4.5, carb: 7.0,   sugar: 4.3,   fibre: 9.7,  prot: 15.0, salt: 0.0,  source: 'EXAMPLE', example: true },
-  { id: 'bran',  name: 'Wheat bran',      fat: 4.3,  sat: 0.7, carb: 20.0,  sugar: 0.4,   fibre: 43.0, prot: 16.0, salt: 0.01, source: 'EXAMPLE', example: true },
-  { id: 'sugar', name: 'Sugar',           fat: 0.0,  sat: 0.0, carb: 100.0, sugar: 100.0, fibre: 0.0,  prot: 0.0,  salt: 0.0,  source: 'EXAMPLE', example: true },
-  { id: 'apple', name: 'Dried apple',     fat: 0.3,  sat: 0.1, carb: 60.0,  sugar: 57.0,  fibre: 8.7,  prot: 1.0,  salt: 0.0,  source: 'EXAMPLE', example: true },
-  { id: 'sunfl', name: 'Sunflower seeds', fat: 51.0, sat: 4.5, carb: 20.0,  sugar: 2.6,   fibre: 8.6,  prot: 21.0, salt: 0.0,  source: 'EXAMPLE', example: true },
-  { id: 'honey', name: 'Honey',           fat: 0.0,  sat: 0.0, carb: 82.0,  sugar: 82.0,  fibre: 0.2,  prot: 0.3,  salt: 0.0,  source: 'EXAMPLE', example: true }
+var CATS = [
+  { id: 'cereal',  name: 'Cereals & flours', color: '#B69B75' },
+  { id: 'nuts',    name: 'Nuts & seeds',     color: '#A8C3B0' },
+  { id: 'fruit',   name: 'Dried fruit',      color: '#E9752E' },
+  { id: 'sweet',   name: 'Sweeteners',       color: '#F1E98F' },
+  { id: 'fat',     name: 'Fats & oils',      color: '#8FA7B5' },
+  { id: 'dairy',   name: 'Dairy',            color: '#BDBAB1' },
+  { id: 'protein', name: 'Protein',          color: '#6D8E60' },
+  { id: 'other',   name: 'Basics & other',   color: '#DB3A26' }
 ];
+var LIGHT_TEXT = { '#E9752E': false, '#6D8E60': true, '#DB3A26': true, '#B69B75': false, '#8FA7B5': false };
+function catOf(id) { return CATS.find(function (c) { return c.id === id; }) || CATS[CATS.length - 1]; }
+
+// Starter library. Values are typical reference values per 100 g and are marked EXAMPLE:
+// replace them with the values printed on the label or in the supplier specification before you rely on a result.
+var EXAMPLE_INGREDIENTS = [
+  { id: 'oats',   name: 'Rolled oats',            cat: 'cereal',  fat: 7.0,   sat: 1.3,  carb: 58.0,  sugar: 1.0,   fibre: 10.0, prot: 13.0, salt: 0.02 },
+  { id: 'flour',  name: 'Wheat flour, white',     cat: 'cereal',  fat: 1.0,   sat: 0.2,  carb: 72.0,  sugar: 0.8,   fibre: 3.0,  prot: 10.0, salt: 0.01 },
+  { id: 'wflour', name: 'Wheat flour, wholemeal', cat: 'cereal',  fat: 2.5,   sat: 0.4,  carb: 62.0,  sugar: 1.5,   fibre: 10.0, prot: 12.0, salt: 0.01 },
+  { id: 'bran',   name: 'Wheat bran',             cat: 'cereal',  fat: 4.3,   sat: 0.7,  carb: 20.0,  sugar: 0.4,   fibre: 43.0, prot: 16.0, salt: 0.01 },
+  { id: 'rice',   name: 'Rice, white, raw',       cat: 'cereal',  fat: 0.7,   sat: 0.2,  carb: 79.0,  sugar: 0.1,   fibre: 1.3,  prot: 7.0,  salt: 0.01 },
+  { id: 'starch', name: 'Corn starch',            cat: 'cereal',  fat: 0.1,   sat: 0.0,  carb: 91.0,  sugar: 0.0,   fibre: 0.9,  prot: 0.3,  salt: 0.01 },
+  { id: 'hazel',  name: 'Hazelnuts',              cat: 'nuts',    fat: 61.0,  sat: 4.5,  carb: 7.0,   sugar: 4.3,   fibre: 9.7,  prot: 15.0, salt: 0.0 },
+  { id: 'almond', name: 'Almonds',                cat: 'nuts',    fat: 49.0,  sat: 3.8,  carb: 9.0,   sugar: 4.4,   fibre: 12.5, prot: 21.0, salt: 0.01 },
+  { id: 'sunfl',  name: 'Sunflower seeds',        cat: 'nuts',    fat: 51.0,  sat: 4.5,  carb: 20.0,  sugar: 2.6,   fibre: 8.6,  prot: 21.0, salt: 0.0 },
+  { id: 'chia',   name: 'Chia seeds',             cat: 'nuts',    fat: 30.7,  sat: 3.3,  carb: 42.0,  sugar: 0.0,   fibre: 34.4, prot: 16.5, salt: 0.04 },
+  { id: 'lin',    name: 'Linseed',                cat: 'nuts',    fat: 42.0,  sat: 3.7,  carb: 29.0,  sugar: 1.6,   fibre: 27.3, prot: 18.3, salt: 0.07 },
+  { id: 'rais',   name: 'Raisins',                cat: 'fruit',   fat: 0.5,   sat: 0.1,  carb: 72.0,  sugar: 59.0,  fibre: 3.7,  prot: 3.1,  salt: 0.03 },
+  { id: 'apple',  name: 'Dried apple',            cat: 'fruit',   fat: 0.3,   sat: 0.1,  carb: 60.0,  sugar: 57.0,  fibre: 8.7,  prot: 1.0,  salt: 0.0 },
+  { id: 'dates',  name: 'Dates, dried',           cat: 'fruit',   fat: 0.4,   sat: 0.1,  carb: 75.0,  sugar: 63.0,  fibre: 8.0,  prot: 2.5,  salt: 0.01 },
+  { id: 'sugar',  name: 'Sugar',                  cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 100.0, sugar: 100.0, fibre: 0.0,  prot: 0.0,  salt: 0.0 },
+  { id: 'honey',  name: 'Honey',                  cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 82.0,  sugar: 82.0,  fibre: 0.2,  prot: 0.3,  salt: 0.0 },
+  { id: 'gsyrup', name: 'Glucose syrup',          cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 80.0,  sugar: 30.0,  fibre: 0.0,  prot: 0.0,  salt: 0.02 },
+  { id: 'sunoil', name: 'Sunflower oil',          cat: 'fat',     fat: 100.0, sat: 11.0, carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
+  { id: 'rapoil', name: 'Rapeseed oil',           cat: 'fat',     fat: 100.0, sat: 7.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
+  { id: 'butter', name: 'Butter, unsalted',       cat: 'fat',     fat: 82.0,  sat: 52.0, carb: 0.6,   sugar: 0.6,   fibre: 0.0,  prot: 0.7,  salt: 0.02 },
+  { id: 'milk',   name: 'Whole milk',             cat: 'dairy',   fat: 3.6,   sat: 2.3,  carb: 4.7,   sugar: 4.7,   fibre: 0.0,  prot: 3.4,  salt: 0.10 },
+  { id: 'smp',    name: 'Skimmed milk powder',    cat: 'dairy',   fat: 1.0,   sat: 0.6,  carb: 52.0,  sugar: 52.0,  fibre: 0.0,  prot: 35.0, salt: 1.20 },
+  { id: 'yog',    name: 'Yoghurt, 3.5 % fat',     cat: 'dairy',   fat: 3.5,   sat: 2.3,  carb: 4.7,   sugar: 4.7,   fibre: 0.0,  prot: 3.5,  salt: 0.12 },
+  { id: 'whey',   name: 'Whey protein concentrate', cat: 'protein', fat: 7.0, sat: 4.5,  carb: 8.0,   sugar: 6.0,   fibre: 0.0,  prot: 80.0, salt: 0.50 },
+  { id: 'soyiso', name: 'Soy protein isolate',    cat: 'protein', fat: 1.0,   sat: 0.2,  carb: 3.0,   sugar: 0.0,   fibre: 2.0,  prot: 88.0, salt: 2.50 },
+  { id: 'pea',    name: 'Pea protein isolate',    cat: 'protein', fat: 7.0,   sat: 1.0,  carb: 4.0,   sugar: 0.5,   fibre: 5.0,  prot: 80.0, salt: 1.50 },
+  { id: 'water',  name: 'Water',                  cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
+  { id: 'salt',   name: 'Salt',                   cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 100.0 },
+  { id: 'cocoa',  name: 'Cocoa powder, low fat',  cat: 'other',   fat: 11.0,  sat: 6.5,  carb: 9.0,   sugar: 0.8,   fibre: 30.0, prot: 20.0, salt: 0.05 },
+  { id: 'bakpow', name: 'Baking powder',          cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 38.0,  sugar: 0.0,   fibre: 0.2,  prot: 0.0,  salt: 25.0 }
+].map(function (i) { i.source = 'EXAMPLE — replace with label values'; i.example = true; return i; });
 
 var KEY = 'claimRadar';
 var state = load();
@@ -358,7 +399,7 @@ function f2(n) { return (Math.round(n * 100) / 100).toFixed(2); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function rule(id) { return RULES.find(function (r) { return r.id === id; }); }
 function ing(id) { return state.ingredients.find(function (i) { return i.id === id; }); }
-function ingColor(id) { var i = state.ingredients.findIndex(function (x) { return x.id === id; }); return PALETTE[(i < 0 ? 0 : i) % PALETTE.length]; }
+function ingColor(id) { var i = ing(id); return catOf(i ? i.cat : 'other').color; }
 function brief() { return state.briefs.find(function (b) { return b.id === state.activeBriefId; }) || state.briefs[0] || null; }
 function isTarget(b, id) { return (b.claimIds || []).indexOf(id) >= 0; }
 function targetNames(b) { return (b.claimIds || []).map(function (id) { var r = rule(id); return r ? r.w : '?'; }).join(' + '); }
@@ -465,12 +506,7 @@ function renderRnd() {
   $('hWhy').textContent = b.reason || '';
   $('basis').textContent = b.type === 'liquid' ? '100 ml' : '100 g';
 
-  $('chips').innerHTML = state.ingredients.map(function (i) { var c = ingColor(i.id); return '<button class="chip" style="background:' + c + (LIGHT_TEXT[c] ? ';color:#fff' : '') + '" data-add="' + i.id + '">+ ' + esc(i.name) + '</button>'; }).join('');
-  $('chips').querySelectorAll('[data-add]').forEach(function (btn) { btn.addEventListener('click', function () {
-    var id = btn.getAttribute('data-add'), ex = b.draft.rows.find(function (x) { return x.ingId === id; });
-    if (ex) ex.grams = (parseFloat(ex.grams) || 0) + 10; else b.draft.rows.push({ ingId: id, grams: 10 });
-    save(); renderRnd();
-  }); });
+  renderPicker();
 
   var mix = $('mix');
   mix.innerHTML = b.draft.rows.map(function (row, i) {
@@ -480,8 +516,35 @@ function renderRnd() {
   mix.querySelectorAll('input').forEach(function (inp) { inp.addEventListener('input', function () { b.draft.rows[+inp.getAttribute('data-i')].grams = parseFloat(inp.value) || 0; save(); renderLive(); }); });
   mix.querySelectorAll('.x').forEach(function (x) { x.addEventListener('click', function () { b.draft.rows.splice(+x.getAttribute('data-i'), 1); save(); renderRnd(); }); });
   $('loss').value = b.draft.loss || 0;
+  $('ingSearch').value = pickSearch;
   renderLive(); renderHistory();
 }
+
+var pickSearch = '', pickCat = 'all';
+function renderPicker() {
+  var b = brief(); if (!b) return;
+  var q = pickSearch.trim().toLowerCase();
+  var used = CATS.filter(function (c) { return state.ingredients.some(function (i) { return (i.cat || 'other') === c.id; }); });
+  $('catBar').innerHTML = '<button class="catchip ' + (pickCat === 'all' ? 'on' : '') + '" data-cat="all">All <span style="opacity:.6">' + state.ingredients.length + '</span></button>' +
+    used.map(function (c) { var n = state.ingredients.filter(function (i) { return (i.cat || 'other') === c.id; }).length;
+      return '<button class="catchip ' + (pickCat === c.id ? 'on' : '') + '" data-cat="' + c.id + '"><i style="background:' + c.color + '"></i>' + esc(c.name) + ' <span style="opacity:.6">' + n + '</span></button>'; }).join('');
+  $('catBar').querySelectorAll('[data-cat]').forEach(function (btn) { btn.addEventListener('click', function () { pickCat = btn.getAttribute('data-cat'); renderPicker(); }); });
+
+  var list = state.ingredients.filter(function (i) {
+    return (pickCat === 'all' || (i.cat || 'other') === pickCat) && (!q || i.name.toLowerCase().indexOf(q) >= 0);
+  }).sort(function (a, c) { return a.name.localeCompare(c.name); });
+
+  $('chips').innerHTML = list.map(function (i) { var col = ingColor(i.id); var inMix = b.draft.rows.some(function (r) { return r.ingId === i.id; });
+    return '<button class="chip" style="background:' + col + (LIGHT_TEXT[col] ? ';color:#fff' : '') + (inMix ? ';outline:2px solid var(--ink);outline-offset:1px' : '') + '" data-add="' + i.id + '">+ ' + esc(i.name) + '</button>'; }).join('') ||
+    '<div class="hint">No ingredient matches. Add it under “Ingredients”.</div>';
+  $('chips').querySelectorAll('[data-add]').forEach(function (btn) { btn.addEventListener('click', function () {
+    var id = btn.getAttribute('data-add'), ex = b.draft.rows.find(function (x) { return x.ingId === id; });
+    if (ex) ex.grams = (parseFloat(ex.grams) || 0) + 10; else b.draft.rows.push({ ingId: id, grams: 10 });
+    save(); renderRnd();
+  }); });
+  $('pickCount').textContent = list.length === state.ingredients.length ? state.ingredients.length + ' ingredients' : 'Showing ' + list.length + ' of ' + state.ingredients.length;
+}
+$('ingSearch').addEventListener('input', function (e) { pickSearch = e.target.value; renderPicker(); });
 
 function renderLive() {
   var b = brief(); if (!b) return;
@@ -537,20 +600,26 @@ function renderHistory() {
 
 // ---- library ----
 var libEditId = null;
+var libSearch = '';
 function renderLibrary() {
-  $('libTable').innerHTML = '<tr><th>Name</th><th>Fat</th><th>Sat.</th><th>Carb</th><th>Sugar</th><th>Fibre</th><th>Protein</th><th>Salt</th><th>kcal</th><th></th></tr>' +
-    state.ingredients.map(function (i) {
-      return '<tr><td><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + ingColor(i.id) + ';margin-right:8px"></span>' + esc(i.name) + (i.example ? ' <span class="hint">EXAMPLE</span>' : '') + '</td><td class="num">' + f1(i.fat) + '</td><td class="num">' + f1(i.sat) + '</td><td class="num">' + f1(i.carb) + '</td><td class="num">' + f1(i.sugar) + '</td><td class="num">' + f1(i.fibre) + '</td><td class="num">' + f1(i.prot) + '</td><td class="num">' + f2(i.salt) + '</td><td class="num">' + Math.round(4 * i.carb + 4 * i.prot + 9 * i.fat + 2 * i.fibre) + '</td>' +
+  if ($('liCat').options.length !== CATS.length) $('liCat').innerHTML = CATS.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join('');
+  var q = libSearch.trim().toLowerCase();
+  var list = state.ingredients.filter(function (i) { return !q || i.name.toLowerCase().indexOf(q) >= 0; })
+    .sort(function (a, c) { var ca = CATS.findIndex(function (x) { return x.id === (a.cat || 'other'); }), cc = CATS.findIndex(function (x) { return x.id === (c.cat || 'other'); }); return ca - cc || a.name.localeCompare(c.name); });
+  $('libTable').innerHTML = '<tr><th>Name</th><th style="text-align:left">Category</th><th>Fat</th><th>Sat.</th><th>Carb</th><th>Sugar</th><th>Fibre</th><th>Protein</th><th>Salt</th><th>kcal</th><th></th></tr>' +
+    list.map(function (i) {
+      return '<tr><td><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + ingColor(i.id) + ';margin-right:8px"></span>' + esc(i.name) + (i.example ? ' <span class="hint">EXAMPLE</span>' : '') + '</td><td style="text-align:left" class="hint">' + esc(catOf(i.cat).name) + '</td><td class="num">' + f1(i.fat) + '</td><td class="num">' + f1(i.sat) + '</td><td class="num">' + f1(i.carb) + '</td><td class="num">' + f1(i.sugar) + '</td><td class="num">' + f1(i.fibre) + '</td><td class="num">' + f1(i.prot) + '</td><td class="num">' + f2(i.salt) + '</td><td class="num">' + Math.round(4 * i.carb + 4 * i.prot + 9 * i.fat + 2 * i.fibre) + '</td>' +
         '<td><button class="btn sm" data-e="' + i.id + '">Edit</button> <button class="btn sm" data-d="' + i.id + '">Delete</button></td></tr>';
     }).join('');
-  $('libTable').querySelectorAll('[data-e]').forEach(function (btn) { btn.addEventListener('click', function () { var i = ing(btn.getAttribute('data-e')); libEditId = i.id; $('liName').value = i.name; $('liFat').value = i.fat; $('liSat').value = i.sat; $('liCarb').value = i.carb; $('liSugar').value = i.sugar; $('liFibre').value = i.fibre; $('liProt').value = i.prot; $('liSalt').value = i.salt; $('liSource').value = i.source || ''; $('liName').focus(); }); });
+  $('libTable').querySelectorAll('[data-e]').forEach(function (btn) { btn.addEventListener('click', function () { var i = ing(btn.getAttribute('data-e')); libEditId = i.id; $('liName').value = i.name; $('liFat').value = i.fat; $('liSat').value = i.sat; $('liCarb').value = i.carb; $('liSugar').value = i.sugar; $('liFibre').value = i.fibre; $('liProt').value = i.prot; $('liSalt').value = i.salt; $('liSource').value = i.source || ''; $('liCat').value = i.cat || 'other'; $('liName').focus(); }); });
   $('libTable').querySelectorAll('[data-d]').forEach(function (btn) { btn.addEventListener('click', function () { if (!confirm('Delete this ingredient?')) return; state.ingredients = state.ingredients.filter(function (x) { return x.id !== btn.getAttribute('data-d'); }); save(); renderAll(); }); });
 }
-function clearLibForm() { ['liName', 'liFat', 'liSat', 'liCarb', 'liSugar', 'liFibre', 'liProt', 'liSalt', 'liSource'].forEach(function (id) { $(id).value = ''; }); libEditId = null; }
+function clearLibForm() { ['liName', 'liFat', 'liSat', 'liCarb', 'liSugar', 'liFibre', 'liProt', 'liSalt', 'liSource'].forEach(function (id) { $(id).value = ''; }); $('liCat').value = 'other'; libEditId = null; }
+$('libSearch').addEventListener('input', function (e) { libSearch = e.target.value; renderLibrary(); });
 $('liSave').addEventListener('click', function () {
   var name = $('liName').value.trim(); if (!name) { alert('Please enter a name.'); return; }
   var n = function (id) { return parseFloat($(id).value) || 0; };
-  var obj = { id: libEditId || uid(), name: name, fat: n('liFat'), sat: n('liSat'), carb: n('liCarb'), sugar: n('liSugar'), fibre: n('liFibre'), prot: n('liProt'), salt: n('liSalt'), source: $('liSource').value.trim(), example: false };
+  var obj = { id: libEditId || uid(), name: name, cat: $('liCat').value, fat: n('liFat'), sat: n('liSat'), carb: n('liCarb'), sugar: n('liSugar'), fibre: n('liFibre'), prot: n('liProt'), salt: n('liSalt'), source: $('liSource').value.trim(), example: false };
   var idx = state.ingredients.findIndex(function (x) { return x.id === obj.id; });
   if (idx >= 0) state.ingredients[idx] = obj; else state.ingredients.push(obj);
   clearLibForm(); save(); renderAll();
@@ -613,14 +682,16 @@ $('fileXlsx').addEventListener('change', function (e) {
       var wb = XLSX.read(rd.result, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
       var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
       var norm = function (k) { return String(k).toLowerCase().replace(/[^a-z]/g, ''); };
-      var map = { name: ['name', 'ingredient', 'zutat'], fat: ['fat', 'fett'], sat: ['saturates', 'ofwhichsaturates', 'saturatedfat', 'gesttigte'], carb: ['carbohydrate', 'carbohydrates', 'carb', 'kohlenhydrate'], sugar: ['sugars', 'ofwhichsugars', 'sugar', 'zucker'], fibre: ['fibre', 'fiber', 'ballaststoffe'], prot: ['protein', 'eiweiss', 'eiwei'], salt: ['salt', 'salz'], source: ['source', 'wherefrom', 'quelle'] };
+      var map = { name: ['name', 'ingredient', 'zutat'], fat: ['fat', 'fett'], sat: ['saturates', 'ofwhichsaturates', 'saturatedfat', 'gesttigte'], carb: ['carbohydrate', 'carbohydrates', 'carb', 'kohlenhydrate'], sugar: ['sugars', 'ofwhichsugars', 'sugar', 'zucker'], fibre: ['fibre', 'fiber', 'ballaststoffe'], prot: ['protein', 'eiweiss', 'eiwei'], salt: ['salt', 'salz'], source: ['source', 'wherefrom', 'quelle'], cat: ['category', 'kategorie', 'group'] };
       var added = 0, updated = 0, skipped = 0;
       rows.forEach(function (row) {
         var got = {};
         Object.keys(row).forEach(function (k) { var nk = norm(k); Object.keys(map).forEach(function (field) { if (got[field] === undefined && map[field].some(function (a) { return nk === a || nk.indexOf(a) === 0; })) got[field] = row[k]; }); });
         var name = String(got.name || '').trim(); if (!name) { skipped++; return; }
         var num = function (v) { var n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; };
-        var obj = { name: name, fat: num(got.fat), sat: num(got.sat), carb: num(got.carb), sugar: num(got.sugar), fibre: num(got.fibre), prot: num(got.prot), salt: num(got.salt), source: String(got.source || f.name).trim(), example: false };
+        var cname = String(got.cat || '').trim().toLowerCase();
+        var cmatch = CATS.find(function (c) { return c.id === cname || c.name.toLowerCase() === cname; });
+        var obj = { name: name, cat: cmatch ? cmatch.id : 'other', fat: num(got.fat), sat: num(got.sat), carb: num(got.carb), sugar: num(got.sugar), fibre: num(got.fibre), prot: num(got.prot), salt: num(got.salt), source: String(got.source || f.name).trim(), example: false };
         var ex = state.ingredients.find(function (i) { return i.name.toLowerCase() === name.toLowerCase(); });
         if (ex) { Object.assign(ex, obj); updated++; } else { obj.id = uid(); state.ingredients.push(obj); added++; }
       });
