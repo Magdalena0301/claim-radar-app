@@ -68,17 +68,21 @@
   .hero .k { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
   .hero .claim { font-size: clamp(30px, 4.6vw, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1; margin: 6px 0 8px; }
   .hero .why { color: var(--muted); font-size: 14px; max-width: 56ch; }
-  .hero .bigwrap { text-align: right; }
-  .hero .big { font-size: clamp(40px, 6vw, 62px); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
-  .hero .big small { font-size: .42em; font-weight: 600; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
-  .hero .limit { color: var(--muted); font-size: 14px; margin-top: 4px; }
-  .hero .badge { margin-top: 10px; }
-  .meter { grid-column: 1 / -1; }
-  .meter .track { position: relative; height: 18px; background: var(--card2); border-radius: 999px; }
-  .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--red); transition: width .3s; }
-  .meter .fill.ok { background: var(--green); }
-  .meter .mark { position: absolute; top: -6px; bottom: -6px; width: 4px; background: var(--ink); left: 50%; border-radius: 3px; }
-  .meter .legend { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-top: 8px; gap: 10px; font-weight: 600; }
+  .hero .bigwrap { text-align: right; align-self: start; }
+  .meters { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 16px; }
+  .mrow { display: flex; flex-direction: column; gap: 7px; }
+  .mhead { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .mname { font-weight: 800; font-size: 15px; }
+  .mval { font-weight: 800; letter-spacing: -0.03em; font-size: 26px; line-height: 1; white-space: nowrap; }
+  .mval small { font-size: .5em; font-weight: 600; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+  .mval.ok { color: var(--green); } .mval.no { color: var(--red); } .mval.na { color: var(--muted); }
+  .meters.single .mname { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .meters.single .mval { font-size: clamp(38px, 5.4vw, 58px); }
+  .track { position: relative; height: 18px; background: var(--card2); border-radius: 999px; }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--red); transition: width .3s; min-width: 18px; }
+  .fill.ok { background: var(--green); }
+  .mark { position: absolute; top: -6px; bottom: -6px; width: 4px; background: var(--ink); left: 50%; border-radius: 3px; }
+  .legend { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-top: 7px; gap: 10px; font-weight: 600; }
 
   /* work */
   .work { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
@@ -151,7 +155,7 @@
   .drawer .form { grid-template-columns: 1fr 1fr; }
   .drawer .field.wide, .drawer .field[style*="span 2"] { grid-column: 1 / -1; }
 
-  @media (prefers-reduced-motion: reduce) { .meter .fill, .chip, .drawer, .scrim { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .fill, .chip, .drawer, .scrim { transition: none; } }
 
   /* ---- print / PDF ---- */
   .print-only { display: none; }
@@ -177,7 +181,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v2.2</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v2.3</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -220,17 +224,9 @@
         <div class="k">Target claims</div>
         <div class="claim" id="hClaim"></div>
         <div class="why"><span id="hProd"></span><span id="hWhy"></span></div>
-        <div class="chips" id="hTargets" style="margin-top:10px"></div>
       </div>
-      <div class="bigwrap">
-        <div class="big num" id="hBig">–</div>
-        <div class="limit" id="hLimit"></div>
-        <div class="badge"><span class="pill na" id="hPill">–</span></div>
-      </div>
-      <div class="meter">
-        <div class="track"><div class="fill" id="mFill" style="width:0"></div><div class="mark"></div></div>
-        <div class="legend"><span id="mLeft"></span><span id="mMid"></span><span id="mRight"></span></div>
-      </div>
+      <div class="bigwrap"><span class="pill na" id="hPill">–</span></div>
+      <div class="meters" id="hMeters"></div>
     </div>
 
     <div class="work">
@@ -676,7 +672,6 @@ $('ingSearch').addEventListener('input', function (e) { pickSearch = e.target.va
 function renderLive() {
   var b = brief(); if (!b) return;
   var p = per100(b.draft.rows, b.draft.loss), res = evaluate(p, b.type), t = focusResult(res, b), ov = overall(res, b), tr = targetResults(res, b);
-  $('hTargets').innerHTML = tr.map(function (x) { return '<span class="pill ' + x.st + '">' + esc(x.r.w) + ' · ' + (x.st === 'ok' ? 'allowed' : x.st === 'no' ? 'not yet' : (x.pending ? 'waiting for the recipe' : 'manual check')) + '</span>'; }).join('');
   $('mixTotal').textContent = f1(p.total) + ' g';
   $('tE').innerHTML = p.valid ? Math.round(p.energy) + '<small>kcal</small>' : '–';
   $('tS').innerHTML = p.valid ? f1(p.sugar) + '<small>g</small>' : '–';
@@ -685,17 +680,26 @@ function renderLive() {
   $('tSa').innerHTML = p.valid ? f1(p.sat) + '<small>g</small>' : '–';
   $('tP').innerHTML = p.valid ? f1(p.prot) + '<small>g</small>' : '–';
 
-  var big = $('hBig'), lim = $('hLimit'), pill = $('hPill'), fill = $('mFill');
-  if (!t || t.st === 'na') { big.innerHTML = '–'; lim.textContent = t ? (t.pending ? 'Tap an ingredient to start.' : t.r.w + ': ' + t.text) : ''; pill.className = 'pill na'; pill.textContent = !t ? 'no result yet' : (t.pending ? 'add ingredients' : 'manual check'); fill.style.width = '0'; $('mLeft').textContent = $('mMid').textContent = $('mRight').textContent = ''; }
-  else {
-    var r = t.r, u = unitShort(r.unit);
-    big.innerHTML = fmtVal(t.v, r.unit) + '<small>' + u + ' ' + NUT_LABEL[r.nut] + '</small>';
-    lim.textContent = (r.rule === 'max' ? 'limit ' : 'at least ') + t.thr + ' ' + u + ' · ' + t.text;
-    var comp = tr.filter(function (x) { return x.st !== 'na'; }), nOk = comp.filter(function (x) { return x.st === 'ok'; }).length, nMan = tr.length - comp.length;
-    pill.className = 'pill ' + ov; pill.textContent = (ov === 'ok' ? (comp.length > 1 ? 'All ' + comp.length + ' allowed ✓' : 'Allowed ✓') : (comp.length > 1 ? nOk + ' of ' + comp.length + ' allowed' : 'Not yet')) + (nMan ? ' · ' + nMan + ' manual' : '');
-    fill.style.width = (Math.min(t.v / (t.thr * 2), 1) * 100) + '%'; fill.className = 'fill ' + (t.st === 'ok' ? 'ok' : '');
-    $('mLeft').textContent = '0'; $('mMid').textContent = (r.rule === 'max' ? 'limit ' : 'minimum ') + t.thr + ' ' + u; $('mRight').textContent = (t.thr * 2) + ' ' + u;
-  }
+  var pill = $('hPill');
+  var comp = tr.filter(function (x) { return x.st !== 'na'; }), nOk = comp.filter(function (x) { return x.st === 'ok'; }).length, nMan = tr.length - comp.length;
+  if (!tr.length) { pill.className = 'pill na'; pill.textContent = 'no target claim'; }
+  else if (ov === 'na') { pill.className = 'pill na'; pill.textContent = tr[0].pending ? 'add ingredients' : 'manual check'; }
+  else { pill.className = 'pill ' + ov; pill.textContent = (ov === 'ok' ? (comp.length > 1 ? 'All ' + comp.length + ' allowed ✓' : 'Allowed ✓') : (comp.length > 1 ? nOk + ' of ' + comp.length + ' allowed' : 'Not yet')) + (nMan ? ' · ' + nMan + ' manual' : ''); }
+
+  function nice(v) { return (Math.round(v * 1000) / 1000) + ''; }
+  $('hMeters').className = 'meters' + (tr.length === 1 ? ' single' : '');
+  $('hMeters').innerHTML = tr.map(function (x) {
+    var r = x.r, u = unitShort(r.unit);
+    if (x.st === 'na') {
+      return '<div class="mrow"><div class="mhead"><span class="mname">' + esc(r.w) + '</span><span class="mval na">–</span></div>' +
+        '<div class="track"></div><div class="legend"><span></span><span>' + esc(x.text) + '</span><span></span></div></div>';
+    }
+    var frac = Math.max(Math.min(x.v / (x.thr * 2), 1), 0);
+    return '<div class="mrow"><div class="mhead"><span class="mname">' + esc(r.w) + '</span>' +
+      '<span class="mval num ' + x.st + '">' + fmtVal(x.v, r.unit) + '<small>' + u + ' ' + NUT_LABEL[r.nut] + '</small></span></div>' +
+      '<div class="track"><div class="fill ' + (x.st === 'ok' ? 'ok' : '') + '" style="width:' + (frac * 100) + '%"></div><div class="mark"></div></div>' +
+      '<div class="legend"><span>0</span><span>' + (r.rule === 'max' ? 'limit ' : 'minimum ') + nice(x.thr) + ' ' + u + ' · ' + esc(x.text) + '</span><span>' + nice(x.thr * 2) + ' ' + u + '</span></div></div>';
+  }).join('') || '<div class="hint">No target claim selected for this brief.</div>';
 
   var groups = { ok: [], no: [], na: [] };
   res.forEach(function (x) { groups[x.st].push(x); });
