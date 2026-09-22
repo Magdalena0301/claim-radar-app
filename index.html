@@ -153,7 +153,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.5</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.6</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -364,7 +364,7 @@ function isTarget(b, id) { return (b.claimIds || []).indexOf(id) >= 0; }
 function targetNames(b) { return (b.claimIds || []).map(function (id) { var r = rule(id); return r ? r.w : '?'; }).join(' + '); }
 function targetResults(res, b) { return res.filter(function (x) { return isTarget(b, x.r.id); }); }
 function focusResult(res, b) { var tr = targetResults(res, b); return tr.find(function (x) { return x.st === 'no'; }) || tr.find(function (x) { return x.st === 'ok'; }) || tr[0] || null; }
-function overall(res, b) { var tr = targetResults(res, b); if (!tr.length) return 'na'; if (tr.some(function (x) { return x.st === 'na'; })) return 'na'; return tr.every(function (x) { return x.st === 'ok'; }) ? 'ok' : 'no'; }
+function overall(res, b) { var tr = targetResults(res, b).filter(function (x) { return x.st !== 'na'; }); if (!tr.length) return 'na'; return tr.every(function (x) { return x.st === 'ok'; }) ? 'ok' : 'no'; }
 
 // ---- calculation ----
 function per100(rows, loss) {
@@ -419,10 +419,12 @@ function renderAll() {
 var nbPicked = [];
 function renderClaimSelect() {
   var box = $('nbClaim');
-  box.innerHTML = RULES.filter(function (r) { return r.rule !== 'ingredient' && r.rule !== 'manual'; }).map(function (r) {
-    var on = nbPicked.indexOf(r.id) >= 0;
-    return '<button type="button" class="chip" data-pick="' + r.id + '" style="background:' + (on ? 'var(--ink)' : 'var(--card2)') + ';color:' + (on ? 'var(--card)' : 'inherit') + '">' + (on ? '\u2713 ' : '') + esc(r.w) + '</button>';
-  }).join('');
+  var computable = RULES.filter(function (r) { return r.rule !== 'ingredient' && r.rule !== 'manual'; });
+  var manual = RULES.filter(function (r) { return r.rule === 'ingredient' || r.rule === 'manual'; });
+  function chip(r, tag) { var on = nbPicked.indexOf(r.id) >= 0; return '<button type="button" class="chip" data-pick="' + r.id + '" style="background:' + (on ? 'var(--ink)' : 'var(--card2)') + ';color:' + (on ? 'var(--card)' : 'inherit') + '">' + (on ? '\u2713 ' : '') + esc(r.w) + (tag ? ' <span style="opacity:.6;font-weight:500">· ' + tag + '</span>' : '') + '</button>'; }
+  box.innerHTML = computable.map(function (r) { return chip(r, ''); }).join('') +
+    '<div class="hint" style="flex:0 0 100%;margin-top:6px">These claims exist in the Annex too, but the app cannot calculate them from a nutrition table — they will be marked "manual check":</div>' +
+    manual.map(function (r) { return chip(r, 'manual'); }).join('');
   box.querySelectorAll('[data-pick]').forEach(function (btn) { btn.addEventListener('click', function () { var id = +btn.getAttribute('data-pick'), i = nbPicked.indexOf(id); if (i >= 0) nbPicked.splice(i, 1); else nbPicked.push(id); renderClaimSelect(); }); });
 }
 function briefStatus(b) {
@@ -486,7 +488,7 @@ function renderRnd() {
 function renderLive() {
   var b = brief(); if (!b) return;
   var p = per100(b.draft.rows, b.draft.loss), res = evaluate(p, b.type), t = focusResult(res, b), ov = overall(res, b), tr = targetResults(res, b);
-  $('hTargets').innerHTML = tr.map(function (x) { return '<span class="pill ' + x.st + '">' + esc(x.r.w) + ' · ' + (x.st === 'ok' ? 'allowed' : x.st === 'no' ? 'not yet' : '–') + '</span>'; }).join('');
+  $('hTargets').innerHTML = tr.map(function (x) { return '<span class="pill ' + x.st + '">' + esc(x.r.w) + ' · ' + (x.st === 'ok' ? 'allowed' : x.st === 'no' ? 'not yet' : 'manual check') + '</span>'; }).join('');
   $('mixTotal').textContent = f1(p.total) + ' g';
   $('tE').innerHTML = p.valid ? Math.round(p.energy) + '<small>kcal</small>' : '–';
   $('tS').innerHTML = p.valid ? f1(p.sugar) + '<small>g</small>' : '–';
@@ -496,13 +498,13 @@ function renderLive() {
   $('tP').innerHTML = p.valid ? f1(p.prot) + '<small>g</small>' : '–';
 
   var big = $('hBig'), lim = $('hLimit'), pill = $('hPill'), fill = $('mFill');
-  if (!t || t.st === 'na') { big.innerHTML = '–'; lim.textContent = t ? t.text : ''; pill.className = 'pill na'; pill.textContent = 'no result yet'; fill.style.width = '0'; $('mLeft').textContent = $('mMid').textContent = $('mRight').textContent = ''; }
+  if (!t || t.st === 'na') { big.innerHTML = '–'; lim.textContent = t ? (t.r.w + ': ' + t.text) : ''; pill.className = 'pill na'; pill.textContent = t ? 'manual check' : 'no result yet'; fill.style.width = '0'; $('mLeft').textContent = $('mMid').textContent = $('mRight').textContent = ''; }
   else {
     var r = t.r, u = unitShort(r.unit);
     big.innerHTML = fmtVal(t.v, r.unit) + '<small>' + u + ' ' + NUT_LABEL[r.nut] + '</small>';
     lim.textContent = (r.rule === 'max' ? 'limit ' : 'at least ') + t.thr + ' ' + u + ' · ' + t.text;
-    var nOk = tr.filter(function (x) { return x.st === 'ok'; }).length;
-    pill.className = 'pill ' + ov; pill.textContent = ov === 'ok' ? (tr.length > 1 ? 'All ' + tr.length + ' allowed ✓' : 'Allowed ✓') : (tr.length > 1 ? nOk + ' of ' + tr.length + ' allowed' : 'Not yet');
+    var comp = tr.filter(function (x) { return x.st !== 'na'; }), nOk = comp.filter(function (x) { return x.st === 'ok'; }).length, nMan = tr.length - comp.length;
+    pill.className = 'pill ' + ov; pill.textContent = (ov === 'ok' ? (comp.length > 1 ? 'All ' + comp.length + ' allowed ✓' : 'Allowed ✓') : (comp.length > 1 ? nOk + ' of ' + comp.length + ' allowed' : 'Not yet')) + (nMan ? ' · ' + nMan + ' manual' : '');
     fill.style.width = (Math.min(t.v / (t.thr * 2), 1) * 100) + '%'; fill.className = 'fill ' + (t.st === 'ok' ? 'ok' : '');
     $('mLeft').textContent = '0'; $('mMid').textContent = (r.rule === 'max' ? 'limit ' : 'minimum ') + t.thr + ' ' + u; $('mRight').textContent = (t.thr * 2) + ' ' + u;
   }
