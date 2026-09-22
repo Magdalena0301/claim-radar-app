@@ -153,7 +153,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.6</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.7</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -419,12 +419,10 @@ function renderAll() {
 var nbPicked = [];
 function renderClaimSelect() {
   var box = $('nbClaim');
-  var computable = RULES.filter(function (r) { return r.rule !== 'ingredient' && r.rule !== 'manual'; });
-  var manual = RULES.filter(function (r) { return r.rule === 'ingredient' || r.rule === 'manual'; });
-  function chip(r, tag) { var on = nbPicked.indexOf(r.id) >= 0; return '<button type="button" class="chip" data-pick="' + r.id + '" style="background:' + (on ? 'var(--ink)' : 'var(--card2)') + ';color:' + (on ? 'var(--card)' : 'inherit') + '">' + (on ? '\u2713 ' : '') + esc(r.w) + (tag ? ' <span style="opacity:.6;font-weight:500">· ' + tag + '</span>' : '') + '</button>'; }
-  box.innerHTML = computable.map(function (r) { return chip(r, ''); }).join('') +
-    '<div class="hint" style="flex:0 0 100%;margin-top:6px">These claims exist in the Annex too, but the app cannot calculate them from a nutrition table — they will be marked "manual check":</div>' +
-    manual.map(function (r) { return chip(r, 'manual'); }).join('');
+  box.innerHTML = RULES.filter(function (r) { return r.rule !== 'ingredient' && r.rule !== 'manual'; }).map(function (r) {
+    var on = nbPicked.indexOf(r.id) >= 0;
+    return '<button type="button" class="chip" data-pick="' + r.id + '" style="background:' + (on ? 'var(--ink)' : 'var(--card2)') + ';color:' + (on ? 'var(--card)' : 'inherit') + '">' + (on ? '\u2713 ' : '') + esc(r.w) + '</button>';
+  }).join('');
   box.querySelectorAll('[data-pick]').forEach(function (btn) { btn.addEventListener('click', function () { var id = +btn.getAttribute('data-pick'), i = nbPicked.indexOf(id); if (i >= 0) nbPicked.splice(i, 1); else nbPicked.push(id); renderClaimSelect(); }); });
 }
 function briefStatus(b) {
