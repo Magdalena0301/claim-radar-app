@@ -177,7 +177,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v2.1</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v2.2</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -368,46 +368,116 @@ var CATS = [
   { id: 'fruit',   name: 'Dried fruit',      color: '#E9752E' },
   { id: 'sweet',   name: 'Sweeteners',       color: '#F1E98F' },
   { id: 'fat',     name: 'Fats & oils',      color: '#8FA7B5' },
-  { id: 'dairy',   name: 'Dairy',            color: '#BDBAB1' },
+  { id: 'dairy',   name: 'Dairy & eggs',     color: '#BDBAB1' },
   { id: 'protein', name: 'Protein',          color: '#6D8E60' },
+  { id: 'veg',     name: 'Vegetables',       color: '#4F7F74' },
+  { id: 'drink',   name: 'Drinks & liquids', color: '#9A7FA6' },
   { id: 'other',   name: 'Basics & other',   color: '#DB3A26' }
 ];
-var LIGHT_TEXT = { '#E9752E': false, '#6D8E60': true, '#DB3A26': true, '#B69B75': false, '#8FA7B5': false };
+var LIGHT_TEXT = { '#E9752E': false, '#6D8E60': true, '#DB3A26': true, '#B69B75': false, '#8FA7B5': false, '#4F7F74': true, '#9A7FA6': true };
 function catOf(id) { return CATS.find(function (c) { return c.id === id; }) || CATS[CATS.length - 1]; }
 
 // Starter library. Values are typical reference values per 100 g and are marked EXAMPLE:
 // replace them with the values printed on the label or in the supplier specification before you rely on a result.
+// Starter library. Typical reference values per 100 g, marked EXAMPLE: replace them with the values
+// printed on the label or in the supplier specification before you rely on a result.
+// Sugar alcohols (erythritol, xylitol) are deliberately absent: they use a different energy factor
+// (Reg. 1169/2011 Annex XIV) that this version does not model.
 var EXAMPLE_INGREDIENTS = [
-  { id: 'oats',   name: 'Rolled oats',            cat: 'cereal',  fat: 7.0,   sat: 1.3,  carb: 58.0,  sugar: 1.0,   fibre: 10.0, prot: 13.0, salt: 0.02 },
-  { id: 'flour',  name: 'Wheat flour, white',     cat: 'cereal',  fat: 1.0,   sat: 0.2,  carb: 72.0,  sugar: 0.8,   fibre: 3.0,  prot: 10.0, salt: 0.01 },
-  { id: 'wflour', name: 'Wheat flour, wholemeal', cat: 'cereal',  fat: 2.5,   sat: 0.4,  carb: 62.0,  sugar: 1.5,   fibre: 10.0, prot: 12.0, salt: 0.01 },
-  { id: 'bran',   name: 'Wheat bran',             cat: 'cereal',  fat: 4.3,   sat: 0.7,  carb: 20.0,  sugar: 0.4,   fibre: 43.0, prot: 16.0, salt: 0.01 },
-  { id: 'rice',   name: 'Rice, white, raw',       cat: 'cereal',  fat: 0.7,   sat: 0.2,  carb: 79.0,  sugar: 0.1,   fibre: 1.3,  prot: 7.0,  salt: 0.01 },
-  { id: 'starch', name: 'Corn starch',            cat: 'cereal',  fat: 0.1,   sat: 0.0,  carb: 91.0,  sugar: 0.0,   fibre: 0.9,  prot: 0.3,  salt: 0.01 },
-  { id: 'hazel',  name: 'Hazelnuts',              cat: 'nuts',    fat: 61.0,  sat: 4.5,  carb: 7.0,   sugar: 4.3,   fibre: 9.7,  prot: 15.0, salt: 0.0 },
-  { id: 'almond', name: 'Almonds',                cat: 'nuts',    fat: 49.0,  sat: 3.8,  carb: 9.0,   sugar: 4.4,   fibre: 12.5, prot: 21.0, salt: 0.01 },
-  { id: 'sunfl',  name: 'Sunflower seeds',        cat: 'nuts',    fat: 51.0,  sat: 4.5,  carb: 20.0,  sugar: 2.6,   fibre: 8.6,  prot: 21.0, salt: 0.0 },
-  { id: 'chia',   name: 'Chia seeds',             cat: 'nuts',    fat: 30.7,  sat: 3.3,  carb: 42.0,  sugar: 0.0,   fibre: 34.4, prot: 16.5, salt: 0.04 },
-  { id: 'lin',    name: 'Linseed',                cat: 'nuts',    fat: 42.0,  sat: 3.7,  carb: 29.0,  sugar: 1.6,   fibre: 27.3, prot: 18.3, salt: 0.07 },
-  { id: 'rais',   name: 'Raisins',                cat: 'fruit',   fat: 0.5,   sat: 0.1,  carb: 72.0,  sugar: 59.0,  fibre: 3.7,  prot: 3.1,  salt: 0.03 },
-  { id: 'apple',  name: 'Dried apple',            cat: 'fruit',   fat: 0.3,   sat: 0.1,  carb: 60.0,  sugar: 57.0,  fibre: 8.7,  prot: 1.0,  salt: 0.0 },
-  { id: 'dates',  name: 'Dates, dried',           cat: 'fruit',   fat: 0.4,   sat: 0.1,  carb: 75.0,  sugar: 63.0,  fibre: 8.0,  prot: 2.5,  salt: 0.01 },
-  { id: 'sugar',  name: 'Sugar',                  cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 100.0, sugar: 100.0, fibre: 0.0,  prot: 0.0,  salt: 0.0 },
-  { id: 'honey',  name: 'Honey',                  cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 82.0,  sugar: 82.0,  fibre: 0.2,  prot: 0.3,  salt: 0.0 },
-  { id: 'gsyrup', name: 'Glucose syrup',          cat: 'sweet',   fat: 0.0,   sat: 0.0,  carb: 80.0,  sugar: 30.0,  fibre: 0.0,  prot: 0.0,  salt: 0.02 },
-  { id: 'sunoil', name: 'Sunflower oil',          cat: 'fat',     fat: 100.0, sat: 11.0, carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
-  { id: 'rapoil', name: 'Rapeseed oil',           cat: 'fat',     fat: 100.0, sat: 7.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
-  { id: 'butter', name: 'Butter, unsalted',       cat: 'fat',     fat: 82.0,  sat: 52.0, carb: 0.6,   sugar: 0.6,   fibre: 0.0,  prot: 0.7,  salt: 0.02 },
-  { id: 'milk',   name: 'Whole milk',             cat: 'dairy',   fat: 3.6,   sat: 2.3,  carb: 4.7,   sugar: 4.7,   fibre: 0.0,  prot: 3.4,  salt: 0.10 },
-  { id: 'smp',    name: 'Skimmed milk powder',    cat: 'dairy',   fat: 1.0,   sat: 0.6,  carb: 52.0,  sugar: 52.0,  fibre: 0.0,  prot: 35.0, salt: 1.20 },
-  { id: 'yog',    name: 'Yoghurt, 3.5 % fat',     cat: 'dairy',   fat: 3.5,   sat: 2.3,  carb: 4.7,   sugar: 4.7,   fibre: 0.0,  prot: 3.5,  salt: 0.12 },
-  { id: 'whey',   name: 'Whey protein concentrate', cat: 'protein', fat: 7.0, sat: 4.5,  carb: 8.0,   sugar: 6.0,   fibre: 0.0,  prot: 80.0, salt: 0.50 },
-  { id: 'soyiso', name: 'Soy protein isolate',    cat: 'protein', fat: 1.0,   sat: 0.2,  carb: 3.0,   sugar: 0.0,   fibre: 2.0,  prot: 88.0, salt: 2.50 },
-  { id: 'pea',    name: 'Pea protein isolate',    cat: 'protein', fat: 7.0,   sat: 1.0,  carb: 4.0,   sugar: 0.5,   fibre: 5.0,  prot: 80.0, salt: 1.50 },
-  { id: 'water',  name: 'Water',                  cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 0.0 },
-  { id: 'salt',   name: 'Salt',                   cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 0.0,   sugar: 0.0,   fibre: 0.0,  prot: 0.0,  salt: 100.0 },
-  { id: 'cocoa',  name: 'Cocoa powder, low fat',  cat: 'other',   fat: 11.0,  sat: 6.5,  carb: 9.0,   sugar: 0.8,   fibre: 30.0, prot: 20.0, salt: 0.05 },
-  { id: 'bakpow', name: 'Baking powder',          cat: 'other',   fat: 0.0,   sat: 0.0,  carb: 38.0,  sugar: 0.0,   fibre: 0.2,  prot: 0.0,  salt: 25.0 }
+  { id: 'oats', name: 'Rolled oats', cat: 'cereal', fat: 7.0, sat: 1.3, carb: 58.0, sugar: 1.0, fibre: 10.0, prot: 13.0, salt: 0.02 },
+  { id: 'flour', name: 'Wheat flour, white', cat: 'cereal', fat: 1.0, sat: 0.2, carb: 72.0, sugar: 0.8, fibre: 3.0, prot: 10.0, salt: 0.01 },
+  { id: 'wflour', name: 'Wheat flour, wholemeal', cat: 'cereal', fat: 2.5, sat: 0.4, carb: 62.0, sugar: 1.5, fibre: 10.0, prot: 12.0, salt: 0.01 },
+  { id: 'rye', name: 'Rye flour', cat: 'cereal', fat: 1.7, sat: 0.3, carb: 68.0, sugar: 1.3, fibre: 8.0, prot: 8.0, salt: 0.01 },
+  { id: 'spelt', name: 'Spelt flour', cat: 'cereal', fat: 2.4, sat: 0.4, carb: 66.0, sugar: 1.5, fibre: 6.5, prot: 12.0, salt: 0.01 },
+  { id: 'buck', name: 'Buckwheat flour', cat: 'cereal', fat: 3.1, sat: 0.7, carb: 71.0, sugar: 1.5, fibre: 10.0, prot: 13.0, salt: 0.01 },
+  { id: 'polenta', name: 'Cornmeal / polenta', cat: 'cereal', fat: 1.2, sat: 0.2, carb: 79.0, sugar: 0.6, fibre: 3.9, prot: 7.0, salt: 0.01 },
+  { id: 'semol', name: 'Durum wheat semolina', cat: 'cereal', fat: 1.1, sat: 0.2, carb: 72.0, sugar: 2.0, fibre: 3.9, prot: 12.7, salt: 0.01 },
+  { id: 'barley', name: 'Barley flakes', cat: 'cereal', fat: 2.1, sat: 0.4, carb: 64.0, sugar: 0.8, fibre: 9.8, prot: 10.0, salt: 0.01 },
+  { id: 'puffrice', name: 'Puffed rice', cat: 'cereal', fat: 1.0, sat: 0.3, carb: 86.0, sugar: 1.0, fibre: 1.5, prot: 6.5, salt: 0.02 },
+  { id: 'bran', name: 'Wheat bran', cat: 'cereal', fat: 4.3, sat: 0.7, carb: 20.0, sugar: 0.4, fibre: 43.0, prot: 16.0, salt: 0.01 },
+  { id: 'rice', name: 'Rice, white, raw', cat: 'cereal', fat: 0.7, sat: 0.2, carb: 79.0, sugar: 0.1, fibre: 1.3, prot: 7.0, salt: 0.01 },
+  { id: 'starch', name: 'Corn starch', cat: 'cereal', fat: 0.1, sat: 0.0, carb: 91.0, sugar: 0.0, fibre: 0.9, prot: 0.3, salt: 0.01 },
+  { id: 'hazel', name: 'Hazelnuts', cat: 'nuts', fat: 61.0, sat: 4.5, carb: 7.0, sugar: 4.3, fibre: 9.7, prot: 15.0, salt: 0.0 },
+  { id: 'almond', name: 'Almonds', cat: 'nuts', fat: 49.0, sat: 3.8, carb: 9.0, sugar: 4.4, fibre: 12.5, prot: 21.0, salt: 0.01 },
+  { id: 'almgr', name: 'Ground almonds', cat: 'nuts', fat: 53.0, sat: 4.1, carb: 6.0, sugar: 4.0, fibre: 11.0, prot: 24.0, salt: 0.01 },
+  { id: 'walnut', name: 'Walnuts', cat: 'nuts', fat: 65.0, sat: 6.1, carb: 7.0, sugar: 2.6, fibre: 6.7, prot: 15.2, salt: 0.01 },
+  { id: 'cashew', name: 'Cashews', cat: 'nuts', fat: 44.0, sat: 7.8, carb: 27.0, sugar: 5.9, fibre: 3.3, prot: 18.0, salt: 0.01 },
+  { id: 'pist', name: 'Pistachios', cat: 'nuts', fat: 45.0, sat: 5.4, carb: 18.0, sugar: 7.7, fibre: 10.3, prot: 20.0, salt: 0.01 },
+  { id: 'peanut', name: 'Peanuts', cat: 'nuts', fat: 49.0, sat: 7.0, carb: 16.0, sugar: 4.0, fibre: 8.5, prot: 26.0, salt: 0.01 },
+  { id: 'pbutter', name: 'Peanut butter, no added sugar', cat: 'nuts', fat: 50.0, sat: 9.0, carb: 12.0, sugar: 5.0, fibre: 6.0, prot: 25.0, salt: 0.4 },
+  { id: 'sunfl', name: 'Sunflower seeds', cat: 'nuts', fat: 51.0, sat: 4.5, carb: 20.0, sugar: 2.6, fibre: 8.6, prot: 21.0, salt: 0.0 },
+  { id: 'pumpkin', name: 'Pumpkin seeds', cat: 'nuts', fat: 49.0, sat: 8.7, carb: 11.0, sugar: 1.4, fibre: 6.0, prot: 30.0, salt: 0.02 },
+  { id: 'sesame', name: 'Sesame seeds', cat: 'nuts', fat: 50.0, sat: 7.0, carb: 12.0, sugar: 0.3, fibre: 11.8, prot: 18.0, salt: 0.02 },
+  { id: 'chia', name: 'Chia seeds', cat: 'nuts', fat: 30.7, sat: 3.3, carb: 42.0, sugar: 0.0, fibre: 34.4, prot: 16.5, salt: 0.04 },
+  { id: 'lin', name: 'Linseed', cat: 'nuts', fat: 42.0, sat: 3.7, carb: 29.0, sugar: 1.6, fibre: 27.3, prot: 18.3, salt: 0.07 },
+  { id: 'hemp', name: 'Hemp seeds, hulled', cat: 'nuts', fat: 49.0, sat: 5.0, carb: 5.0, sugar: 1.5, fibre: 4.0, prot: 31.0, salt: 0.01 },
+  { id: 'coconut', name: 'Desiccated coconut', cat: 'nuts', fat: 62.0, sat: 55.0, carb: 7.0, sugar: 6.0, fibre: 16.0, prot: 6.0, salt: 0.04 },
+  { id: 'rais', name: 'Raisins', cat: 'fruit', fat: 0.5, sat: 0.1, carb: 72.0, sugar: 59.0, fibre: 3.7, prot: 3.1, salt: 0.03 },
+  { id: 'apple', name: 'Dried apple', cat: 'fruit', fat: 0.3, sat: 0.1, carb: 60.0, sugar: 57.0, fibre: 8.7, prot: 1.0, salt: 0.0 },
+  { id: 'dates', name: 'Dates, dried', cat: 'fruit', fat: 0.4, sat: 0.1, carb: 75.0, sugar: 63.0, fibre: 8.0, prot: 2.5, salt: 0.01 },
+  { id: 'apricot', name: 'Apricots, dried', cat: 'fruit', fat: 0.5, sat: 0.1, carb: 55.0, sugar: 53.0, fibre: 7.3, prot: 3.4, salt: 0.02 },
+  { id: 'cran', name: 'Cranberries, dried, sweetened', cat: 'fruit', fat: 1.4, sat: 0.1, carb: 78.0, sugar: 72.0, fibre: 5.3, prot: 0.1, salt: 0.01 },
+  { id: 'fig', name: 'Figs, dried', cat: 'fruit', fat: 1.0, sat: 0.2, carb: 58.0, sugar: 48.0, fibre: 9.8, prot: 3.3, salt: 0.03 },
+  { id: 'prune', name: 'Prunes', cat: 'fruit', fat: 0.4, sat: 0.1, carb: 64.0, sugar: 38.0, fibre: 7.1, prot: 2.2, salt: 0.01 },
+  { id: 'mango', name: 'Mango, dried', cat: 'fruit', fat: 0.7, sat: 0.2, carb: 78.0, sugar: 66.0, fibre: 5.0, prot: 2.0, salt: 0.01 },
+  { id: 'banchip', name: 'Banana chips', cat: 'fruit', fat: 32.0, sat: 27.0, carb: 58.0, sugar: 35.0, fibre: 7.7, prot: 2.3, salt: 0.01 },
+  { id: 'sugar', name: 'Sugar', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 100.0, sugar: 100.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'brsugar', name: 'Brown sugar', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 98.0, sugar: 97.0, fibre: 0.0, prot: 0.1, salt: 0.03 },
+  { id: 'cocosug', name: 'Coconut blossom sugar', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 92.0, sugar: 90.0, fibre: 0.0, prot: 1.0, salt: 0.1 },
+  { id: 'honey', name: 'Honey', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 82.0, sugar: 82.0, fibre: 0.2, prot: 0.3, salt: 0.0 },
+  { id: 'agave', name: 'Agave syrup', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 76.0, sugar: 68.0, fibre: 0.2, prot: 0.1, salt: 0.01 },
+  { id: 'maple', name: 'Maple syrup', cat: 'sweet', fat: 0.1, sat: 0.0, carb: 67.0, sugar: 60.0, fibre: 0.0, prot: 0.04, salt: 0.03 },
+  { id: 'datesyr', name: 'Date syrup', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 72.0, sugar: 66.0, fibre: 1.0, prot: 1.0, salt: 0.02 },
+  { id: 'ricesyr', name: 'Rice syrup', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 78.0, sugar: 30.0, fibre: 0.0, prot: 0.5, salt: 0.05 },
+  { id: 'molasses', name: 'Molasses', cat: 'sweet', fat: 0.1, sat: 0.0, carb: 75.0, sugar: 66.0, fibre: 0.0, prot: 0.0, salt: 0.09 },
+  { id: 'gsyrup', name: 'Glucose syrup', cat: 'sweet', fat: 0.0, sat: 0.0, carb: 80.0, sugar: 30.0, fibre: 0.0, prot: 0.0, salt: 0.02 },
+  { id: 'sunoil', name: 'Sunflower oil', cat: 'fat', fat: 100.0, sat: 11.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'rapoil', name: 'Rapeseed oil', cat: 'fat', fat: 100.0, sat: 7.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'oliveoil', name: 'Olive oil', cat: 'fat', fat: 100.0, sat: 14.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'cocooil', name: 'Coconut oil', cat: 'fat', fat: 100.0, sat: 87.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'cocobut', name: 'Cocoa butter', cat: 'fat', fat: 100.0, sat: 60.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'butter', name: 'Butter, unsalted', cat: 'fat', fat: 82.0, sat: 52.0, carb: 0.6, sugar: 0.6, fibre: 0.0, prot: 0.7, salt: 0.02 },
+  { id: 'marg', name: 'Margarine, 80 % fat', cat: 'fat', fat: 80.0, sat: 20.0, carb: 0.4, sugar: 0.4, fibre: 0.0, prot: 0.2, salt: 0.8 },
+  { id: 'milk', name: 'Whole milk', cat: 'dairy', fat: 3.6, sat: 2.3, carb: 4.7, sugar: 4.7, fibre: 0.0, prot: 3.4, salt: 0.1 },
+  { id: 'milk15', name: 'Semi-skimmed milk, 1.5 %', cat: 'dairy', fat: 1.5, sat: 1.0, carb: 4.8, sugar: 4.8, fibre: 0.0, prot: 3.4, salt: 0.1 },
+  { id: 'smp', name: 'Skimmed milk powder', cat: 'dairy', fat: 1.0, sat: 0.6, carb: 52.0, sugar: 52.0, fibre: 0.0, prot: 35.0, salt: 1.2 },
+  { id: 'yog', name: 'Yoghurt, 3.5 % fat', cat: 'dairy', fat: 3.5, sat: 2.3, carb: 4.7, sugar: 4.7, fibre: 0.0, prot: 3.5, salt: 0.12 },
+  { id: 'greek', name: 'Greek yoghurt, 10 % fat', cat: 'dairy', fat: 10.0, sat: 6.5, carb: 3.6, sugar: 3.6, fibre: 0.0, prot: 4.0, salt: 0.1 },
+  { id: 'quark', name: 'Quark, low fat', cat: 'dairy', fat: 0.3, sat: 0.2, carb: 4.0, sugar: 4.0, fibre: 0.0, prot: 12.0, salt: 0.05 },
+  { id: 'cream', name: 'Whipping cream, 35 %', cat: 'dairy', fat: 35.0, sat: 23.0, carb: 3.0, sugar: 3.0, fibre: 0.0, prot: 2.2, salt: 0.08 },
+  { id: 'creamch', name: 'Cream cheese', cat: 'dairy', fat: 24.0, sat: 16.0, carb: 3.5, sugar: 3.5, fibre: 0.0, prot: 6.0, salt: 0.8 },
+  { id: 'cheddar', name: 'Cheddar', cat: 'dairy', fat: 34.0, sat: 21.0, carb: 0.1, sugar: 0.1, fibre: 0.0, prot: 25.0, salt: 1.8 },
+  { id: 'egg', name: 'Whole egg', cat: 'dairy', fat: 10.0, sat: 3.1, carb: 0.7, sugar: 0.7, fibre: 0.0, prot: 12.6, salt: 0.3 },
+  { id: 'whey', name: 'Whey protein concentrate', cat: 'protein', fat: 7.0, sat: 4.5, carb: 8.0, sugar: 6.0, fibre: 0.0, prot: 80.0, salt: 0.5 },
+  { id: 'casein', name: 'Casein', cat: 'protein', fat: 1.5, sat: 1.0, carb: 4.0, sugar: 0.5, fibre: 0.0, prot: 85.0, salt: 0.6 },
+  { id: 'soyiso', name: 'Soy protein isolate', cat: 'protein', fat: 1.0, sat: 0.2, carb: 3.0, sugar: 0.0, fibre: 2.0, prot: 88.0, salt: 2.5 },
+  { id: 'pea', name: 'Pea protein isolate', cat: 'protein', fat: 7.0, sat: 1.0, carb: 4.0, sugar: 0.5, fibre: 5.0, prot: 80.0, salt: 1.5 },
+  { id: 'riceprot', name: 'Rice protein', cat: 'protein', fat: 3.0, sat: 0.8, carb: 6.0, sugar: 0.5, fibre: 3.0, prot: 80.0, salt: 0.3 },
+  { id: 'eggwhite', name: 'Egg white powder', cat: 'protein', fat: 0.5, sat: 0.1, carb: 4.0, sugar: 4.0, fibre: 0.0, prot: 82.0, salt: 1.5 },
+  { id: 'carrot', name: 'Carrot', cat: 'veg', fat: 0.2, sat: 0.05, carb: 7.0, sugar: 4.7, fibre: 2.8, prot: 0.9, salt: 0.07 },
+  { id: 'cucum', name: 'Cucumber', cat: 'veg', fat: 0.1, sat: 0.0, carb: 1.8, sugar: 1.7, fibre: 0.5, prot: 0.7, salt: 0.01 },
+  { id: 'onion', name: 'Onion', cat: 'veg', fat: 0.1, sat: 0.0, carb: 7.9, sugar: 5.0, fibre: 1.7, prot: 1.1, salt: 0.01 },
+  { id: 'pepper', name: 'Red pepper', cat: 'veg', fat: 0.3, sat: 0.1, carb: 6.0, sugar: 4.2, fibre: 2.0, prot: 1.0, salt: 0.01 },
+  { id: 'spinach', name: 'Spinach', cat: 'veg', fat: 0.4, sat: 0.1, carb: 1.4, sugar: 0.4, fibre: 2.2, prot: 2.9, salt: 0.16 },
+  { id: 'tompaste', name: 'Tomato paste', cat: 'veg', fat: 0.5, sat: 0.1, carb: 15.0, sugar: 12.0, fibre: 3.0, prot: 4.3, salt: 0.1 },
+  { id: 'potato', name: 'Potato', cat: 'veg', fat: 0.1, sat: 0.0, carb: 15.0, sugar: 0.8, fibre: 2.1, prot: 2.0, salt: 0.01 },
+  { id: 'water', name: 'Water', cat: 'drink', fat: 0.0, sat: 0.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 },
+  { id: 'oatdrink', name: 'Oat drink', cat: 'drink', fat: 1.5, sat: 0.2, carb: 6.6, sugar: 4.0, fibre: 0.8, prot: 0.3, salt: 0.09 },
+  { id: 'soydrink', name: 'Soy drink', cat: 'drink', fat: 1.8, sat: 0.3, carb: 2.5, sugar: 2.5, fibre: 0.5, prot: 3.3, salt: 0.09 },
+  { id: 'almdrink', name: 'Almond drink, unsweetened', cat: 'drink', fat: 1.1, sat: 0.1, carb: 0.1, sugar: 0.1, fibre: 0.4, prot: 0.4, salt: 0.13 },
+  { id: 'ajuice', name: 'Apple juice', cat: 'drink', fat: 0.1, sat: 0.0, carb: 11.0, sugar: 10.5, fibre: 0.1, prot: 0.1, salt: 0.01 },
+  { id: 'ajconc', name: 'Apple juice concentrate', cat: 'drink', fat: 0.0, sat: 0.0, carb: 68.0, sugar: 66.0, fibre: 0.5, prot: 0.4, salt: 0.02 },
+  { id: 'lemon', name: 'Lemon juice', cat: 'drink', fat: 0.2, sat: 0.0, carb: 6.9, sugar: 2.5, fibre: 0.3, prot: 0.4, salt: 0.01 },
+  { id: 'vinegar', name: 'Vinegar', cat: 'drink', fat: 0.0, sat: 0.0, carb: 0.4, sugar: 0.4, fibre: 0.0, prot: 0.0, salt: 0.01 },
+  { id: 'salt', name: 'Salt', cat: 'other', fat: 0.0, sat: 0.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 100.0 },
+  { id: 'cocoa', name: 'Cocoa powder, low fat', cat: 'other', fat: 11.0, sat: 6.5, carb: 9.0, sugar: 0.8, fibre: 30.0, prot: 20.0, salt: 0.05 },
+  { id: 'choc70', name: 'Dark chocolate, 70 %', cat: 'other', fat: 42.0, sat: 25.0, carb: 33.0, sugar: 29.0, fibre: 11.0, prot: 8.0, salt: 0.02 },
+  { id: 'bakpow', name: 'Baking powder', cat: 'other', fat: 0.0, sat: 0.0, carb: 38.0, sugar: 0.0, fibre: 0.2, prot: 0.0, salt: 25.0 },
+  { id: 'baksoda', name: 'Baking soda', cat: 'other', fat: 0.0, sat: 0.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 68.0 },
+  { id: 'yeast', name: 'Yeast, dried', cat: 'other', fat: 7.6, sat: 1.0, carb: 36.0, sugar: 0.0, fibre: 27.0, prot: 40.0, salt: 0.1 },
+  { id: 'cinn', name: 'Cinnamon, ground', cat: 'other', fat: 1.2, sat: 0.3, carb: 28.0, sugar: 2.2, fibre: 53.0, prot: 4.0, salt: 0.03 },
+  { id: 'vanilla', name: 'Vanilla extract', cat: 'other', fat: 0.1, sat: 0.0, carb: 13.0, sugar: 13.0, fibre: 0.0, prot: 0.1, salt: 0.01 },
+  { id: 'citric', name: 'Citric acid', cat: 'other', fat: 0.0, sat: 0.0, carb: 0.0, sugar: 0.0, fibre: 0.0, prot: 0.0, salt: 0.0 }
 ].map(function (i) { i.source = 'EXAMPLE — replace with label values'; i.example = true; return i; });
 
 var KEY = 'claimRadar';
@@ -488,7 +558,7 @@ function evaluate(p, type) {
     if (r.rule === 'ingredient' || r.rule === 'manual') return { r: r, st: 'na', text: r.note };
     if (r.liquidOnly && type !== 'liquid') return { r: r, st: 'na', text: 'only defined for drinks' };
     var thr = type === 'liquid' ? r.l : r.s;
-    if (thr == null || !p.valid) return { r: r, st: 'na', text: 'add ingredients first' };
+    if (thr == null || !p.valid) return { r: r, st: 'na', pending: !p.valid, text: !p.valid ? 'add ingredients first' : 'no threshold for this product type' };
     var v = p[r.nut], ok, gap;
     if (r.rule === 'max') { ok = v <= thr; gap = v - thr; } else { ok = v >= thr; gap = thr - v; }
     var extra = '';
@@ -606,7 +676,7 @@ $('ingSearch').addEventListener('input', function (e) { pickSearch = e.target.va
 function renderLive() {
   var b = brief(); if (!b) return;
   var p = per100(b.draft.rows, b.draft.loss), res = evaluate(p, b.type), t = focusResult(res, b), ov = overall(res, b), tr = targetResults(res, b);
-  $('hTargets').innerHTML = tr.map(function (x) { return '<span class="pill ' + x.st + '">' + esc(x.r.w) + ' · ' + (x.st === 'ok' ? 'allowed' : x.st === 'no' ? 'not yet' : 'manual check') + '</span>'; }).join('');
+  $('hTargets').innerHTML = tr.map(function (x) { return '<span class="pill ' + x.st + '">' + esc(x.r.w) + ' · ' + (x.st === 'ok' ? 'allowed' : x.st === 'no' ? 'not yet' : (x.pending ? 'waiting for the recipe' : 'manual check')) + '</span>'; }).join('');
   $('mixTotal').textContent = f1(p.total) + ' g';
   $('tE').innerHTML = p.valid ? Math.round(p.energy) + '<small>kcal</small>' : '–';
   $('tS').innerHTML = p.valid ? f1(p.sugar) + '<small>g</small>' : '–';
@@ -616,7 +686,7 @@ function renderLive() {
   $('tP').innerHTML = p.valid ? f1(p.prot) + '<small>g</small>' : '–';
 
   var big = $('hBig'), lim = $('hLimit'), pill = $('hPill'), fill = $('mFill');
-  if (!t || t.st === 'na') { big.innerHTML = '–'; lim.textContent = t ? (t.r.w + ': ' + t.text) : ''; pill.className = 'pill na'; pill.textContent = t ? 'manual check' : 'no result yet'; fill.style.width = '0'; $('mLeft').textContent = $('mMid').textContent = $('mRight').textContent = ''; }
+  if (!t || t.st === 'na') { big.innerHTML = '–'; lim.textContent = t ? (t.pending ? 'Tap an ingredient to start.' : t.r.w + ': ' + t.text) : ''; pill.className = 'pill na'; pill.textContent = !t ? 'no result yet' : (t.pending ? 'add ingredients' : 'manual check'); fill.style.width = '0'; $('mLeft').textContent = $('mMid').textContent = $('mRight').textContent = ''; }
   else {
     var r = t.r, u = unitShort(r.unit);
     big.innerHTML = fmtVal(t.v, r.unit) + '<small>' + u + ' ' + NUT_LABEL[r.nut] + '</small>';
