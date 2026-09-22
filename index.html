@@ -153,7 +153,7 @@
 <div class="wrap">
 
   <div class="top">
-    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.4</small></div>
+    <div class="logo"><i></i>Claim Radar <small>Team 10 · DBIS 2026 · v1.5</small></div>
     <div class="seg" role="group" aria-label="View">
       <button id="vMkt">Marketing</button>
       <button id="vRnd" class="on">Product development</button>
@@ -161,9 +161,6 @@
     <div class="tools">
       <button class="btn sm" id="btnLib">Ingredients</button>
       <button class="btn sm" id="btnPdf">PDF</button>
-      <button class="btn sm" id="btnExport">Save file</button>
-      <button class="btn sm" id="btnImport">Load file</button>
-      <input type="file" id="fileImport" accept="application/json" class="hidden">
     </div>
   </div>
 
@@ -192,6 +189,7 @@
 
   <!-- PRODUCT DEVELOPMENT -->
   <div id="viewRnd" class="hidden" style="display:flex; flex-direction:column; gap:18px;">
+    <div class="card" id="noBrief"><div class="card-b"><b>Nothing to work on yet.</b><span class="hint">Go to Marketing, enter a product and the claims you want, and send it to product development.</span></div></div>
 
     <div class="card hero" id="hero">
       <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -269,15 +267,28 @@
         <div class="field"><label for="liSalt">Salt g</label><input id="liSalt" type="number" step="0.01" min="0"></div>
         <div class="field"><label for="liSource">Where from</label><input id="liSource" placeholder="e.g. label, brand X"></div>
       </div>
-      <div style="display:flex; gap:8px"><button class="btn dark" id="liSave">Save ingredient</button><button class="btn" id="liClear">Clear</button></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn dark" id="liSave">Save ingredient</button><button class="btn" id="liClear">Clear</button></div>
+      <div style="border-top:2px solid var(--card2); padding-top:14px; display:flex; flex-direction:column; gap:10px">
+        <b>Import ingredients from Excel</b>
+        <div class="hint">Use the template <code>ingredient_template.xlsx</code> (one row per ingredient, values per 100 g as on the label). Existing ingredients with the same name are updated. CSV works too.</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center"><button class="btn dark sm" id="btnXlsx">Choose Excel / CSV file</button><span class="hint" id="xlsxMsg"></span></div>
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls,.csv" class="hidden">
+      </div>
+      <div style="border-top:2px solid var(--card2); padding-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <span class="hint">Backup of the whole workspace (briefs, recipes, versions):</span>
+        <button class="btn sm" id="btnExport">Save backup</button>
+        <button class="btn sm" id="btnImport">Restore backup</button>
+        <input type="file" id="fileImport" accept="application/json" class="hidden">
+      </div>
     </div>
   </div>
 
 </div>
 <div id="printView" class="print-only"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-/* Claim Radar v1.4 — single-file MVP. State lives in localStorage ("claimRadar").
+/* Claim Radar v1.5 — single-file MVP. State lives in localStorage ("claimRadar").
    per-100 value = Σ(grams × value) / total grams × 100 / (100 − loss %)
    energy kcal = 4·carb + 4·protein + 9·fat + 2·fibre   (Reg. 1169/2011 Annex XIV)
    sodium = salt / 2.5 */
@@ -337,9 +348,7 @@ var KEY = 'claimRadar';
 var state = load();
 function load() {
   try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.briefs && s.v === 2) { s.briefs.forEach(function (b) { if (!b.claimIds) b.claimIds = b.claimId ? [b.claimId] : []; }); return s; } } catch (e) {}
-  return { v: 2, view: 'rnd', ingredients: EXAMPLE_INGREDIENTS.slice(), activeBriefId: 'demo1', briefs: [ {
-    id: 'demo1', product: 'Breakfast muesli (demo)', type: 'solid', claimIds: [8, 16], reason: 'The retailer asked for a low-sugar option for 2027', created: '2026-09-20', status: 'open',
-    draft: { rows: [ { ingId: 'oats', grams: 80 }, { ingId: 'rais', grams: 8 }, { ingId: 'hazel', grams: 7 }, { ingId: 'bran', grams: 5 } ], loss: 0 }, versions: [] } ] };
+  return { v: 2, view: 'mkt', ingredients: EXAMPLE_INGREDIENTS.slice(), activeBriefId: null, briefs: [] };
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 function uid() { return Math.random().toString(36).slice(2, 8); }
@@ -425,7 +434,7 @@ function renderBriefsMkt() {
   if (!state.briefs.length) { box.innerHTML = '<div class="hint">No briefs yet.</div>'; return; }
   box.innerHTML = state.briefs.map(function (b) {
     var st = briefStatus(b);
-    return '<div class="brief ' + (b.id === state.activeBriefId ? 'on' : '') + '" data-id="' + b.id + '"><div><b>' + esc(b.product) + '</b><small>' + esc(targetNames(b)) + ' · ' + b.versions.length + ' version' + (b.versions.length === 1 ? '' : 's') + '</small></div><span style="display:flex;gap:8px;align-items:center"><span class="pill ' + st + '">' + (st === 'ok' ? 'all allowed' : st === 'no' ? 'not yet' : '–') + '</span><button class="btn sm" data-del="' + b.id + '" title="Delete this brief">✕</button></span></div>';
+    return '<div class="brief ' + (b.id === state.activeBriefId ? 'on' : '') + '" data-id="' + b.id + '"><div><b>' + esc(b.product) + '</b><small>' + esc(targetNames(b)) + ' · ' + b.versions.length + ' version' + (b.versions.length === 1 ? '' : 's') + '</small></div><span style="display:flex;gap:8px;align-items:center">' + (st === 'na' ? '' : '<span class="pill ' + st + '">' + (st === 'ok' ? 'all allowed' : 'not yet') + '</span>') + '<button class="btn sm" data-del="' + b.id + '" title="Delete this brief">✕</button></span></div>';
   }).join('');
   box.querySelectorAll('.brief').forEach(function (el) { el.addEventListener('click', function () { state.activeBriefId = el.getAttribute('data-id'); save(); renderAll(); }); });
   box.querySelectorAll('[data-del]').forEach(function (btn) { btn.addEventListener('click', function (e) {
@@ -445,7 +454,12 @@ function renderBriefPick() {
 }
 
 function renderRnd() {
-  var b = brief(); if (!b) return;
+  var b = brief();
+  $('noBrief').classList.toggle('hidden', !!b);
+  $('hero').classList.toggle('hidden', !b);
+  document.querySelector('.work').classList.toggle('hidden', !b);
+  document.querySelector('#viewRnd > .card:last-child').classList.toggle('hidden', !b);
+  if (!b) return;
   $('hClaim').textContent = targetNames(b);
   $('hProd').textContent = b.product + ' · ' + (b.type === 'liquid' ? 'drink, per 100 ml' : 'solid, per 100 g') + (b.reason ? ' · ' : '');
   $('hWhy').textContent = b.reason || '';
@@ -588,6 +602,35 @@ function renderPrint() {
   return true;
 }
 $('btnPdf').addEventListener('click', function () { if (!renderPrint()) { alert('Select a brief first.'); return; } window.print(); });
+// ---- ingredient import (Excel / CSV via SheetJS) ----
+$('btnXlsx').addEventListener('click', function () { $('fileXlsx').click(); });
+$('fileXlsx').addEventListener('change', function (e) {
+  var f = e.target.files[0]; if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    try {
+      if (typeof XLSX === 'undefined') throw new Error('The Excel reader could not be loaded (no internet?). Save the sheet as CSV and try again, or add the ingredient by hand.');
+      var wb = XLSX.read(rd.result, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      var norm = function (k) { return String(k).toLowerCase().replace(/[^a-z]/g, ''); };
+      var map = { name: ['name', 'ingredient', 'zutat'], fat: ['fat', 'fett'], sat: ['saturates', 'ofwhichsaturates', 'saturatedfat', 'gesttigte'], carb: ['carbohydrate', 'carbohydrates', 'carb', 'kohlenhydrate'], sugar: ['sugars', 'ofwhichsugars', 'sugar', 'zucker'], fibre: ['fibre', 'fiber', 'ballaststoffe'], prot: ['protein', 'eiweiss', 'eiwei'], salt: ['salt', 'salz'], source: ['source', 'wherefrom', 'quelle'] };
+      var added = 0, updated = 0, skipped = 0;
+      rows.forEach(function (row) {
+        var got = {};
+        Object.keys(row).forEach(function (k) { var nk = norm(k); Object.keys(map).forEach(function (field) { if (got[field] === undefined && map[field].some(function (a) { return nk === a || nk.indexOf(a) === 0; })) got[field] = row[k]; }); });
+        var name = String(got.name || '').trim(); if (!name) { skipped++; return; }
+        var num = function (v) { var n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; };
+        var obj = { name: name, fat: num(got.fat), sat: num(got.sat), carb: num(got.carb), sugar: num(got.sugar), fibre: num(got.fibre), prot: num(got.prot), salt: num(got.salt), source: String(got.source || f.name).trim(), example: false };
+        var ex = state.ingredients.find(function (i) { return i.name.toLowerCase() === name.toLowerCase(); });
+        if (ex) { Object.assign(ex, obj); updated++; } else { obj.id = uid(); state.ingredients.push(obj); added++; }
+      });
+      save(); renderAll();
+      $('xlsxMsg').textContent = added + ' added, ' + updated + ' updated' + (skipped ? ', ' + skipped + ' rows without a name skipped' : '') + '.';
+    } catch (err) { $('xlsxMsg').textContent = 'Could not read the file: ' + (err.message || err); }
+  };
+  rd.readAsArrayBuffer(f); e.target.value = '';
+});
+
 $('btnExport').addEventListener('click', function () { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })); a.download = 'claim-radar-workspace.json'; a.click(); });
 $('btnImport').addEventListener('click', function () { $('fileImport').click(); });
 $('fileImport').addEventListener('change', function (e) { var f = e.target.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { try { var s = JSON.parse(rd.result); if (!s.briefs || !s.ingredients) throw 0; s.v = 2; state = s; save(); renderAll(); } catch (err) { alert('That is not a Claim Radar file.'); } }; rd.readAsText(f); e.target.value = ''; });
